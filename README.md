@@ -1,2 +1,2 @@
 # VictoryIsOurs_JETBRAINS
-Project
+Project Description
