@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Speech to Code + Questions</title>
+  <style>
+    /* Global Styles */
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: linear-gradient(to right, #e0f7fa, #f1f8e9);
+      color: #333;
+      margin: 0;
+      padding: 20px;
+    }
+
+    h2 {
+      color: #0d47a1;
+      text-shadow: 1px 1px 2px #aaa;
+    }
+
+    hr {
+      margin: 40px 0;
+      border: 2px solid #0d47a1;
+    }
+
+    textarea {
+      width: 100%;
+      border-radius: 8px;
+      padding: 10px;
+      border: 2px solid #0d47a1;
+      font-size: 16px;
+      resize: none;
+    }
+
+    pre {
+      border-radius: 8px;
+      background: #fff3e0;
+      padding: 15px;
+      border: 2px solid #f57c00;
+      font-size: 15px;
+      overflow-x: auto;
+    }
+
+    button {
+      background: #0d47a1;
+      color: white;
+      border: none;
+      padding: 12px 20px;
+      border-radius: 8px;
+      font-size: 16px;
+      cursor: pointer;
+      margin: 5px 5px 15px 0;
+      transition: 0.3s;
+    }
+
+    button:hover {
+      background: #1976d2;
+    }
+
+    section {
+      background: rgba(255, 255, 255, 0.85);
+      padding: 20px;
+      border-radius: 12px;
+      box-shadow: 2px 4px 10px rgba(0,0,0,0.1);
+      margin-bottom: 40px;
+    }
+
+    .code-section {
+      border-left: 8px solid #f57c00;
+    }
+
+    .question-section {
+      border-left: 8px solid #43a047;
+    }
+
+    label {
+      font-weight: bold;
+      display: block;
+      margin-bottom: 5px;
+    }
+
+  </style>
+</head>
+<body>
+
+<section class="code-section">
+  <h2>🎤 Speak to Generate Java Code</h2>
+
+  <!-- Code Section -->
+  <button onclick="startSpeechCode()">🎙️ Start Speaking Code</button>
+  <label for="speechTextCode">Speech for Code:</label>
+  <textarea id="speechTextCode" rows="3"></textarea><br>
+
+  <button onclick="generateCode()">🖥️ Generate Code</button>
+  <button onclick="copyCode()">📋 Copy Code</button>
+
+  <label for="output"><b>Generated Code:</b></label>
+  <pre id="output"></pre>
+</section>
+
+<section class="question-section">
+  <h2>❓ Speak Your Question</h2>
+
+  <!-- Question Section -->
+  <button onclick="startSpeechQuestion()">🎙️ Start Speaking Question</button>
+  <label for="speechTextQuestion">Captured Question:</label>
+  <textarea id="speechTextQuestion" rows="3"></textarea><br>
+
+  <button onclick="copyQuestion()">📋 Copy Question</button>
+</section>
+
+<script>
+  let latestSpeechCode = "";
+  let latestSpeechQuestion = "";
+
+  // ----------- CODE MODE -----------
+  function startSpeechCode() {
+    const recognition = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
+    recognition.lang = "en-US";
+
+    recognition.onresult = function(event) {
+      latestSpeechCode = event.results[0][0].transcript;
+      document.getElementById("speechTextCode").value = latestSpeechCode;
+    };
+
+    recognition.start();
+  }
+
+  function generateCode() {
+    if(latestSpeechCode.trim() === "") {
+      alert("Please speak code command first!");
+      return;
+    }
+
+    fetch("http://localhost:8080/convert", {
+      method: "POST",
+      body: latestSpeechCode
+    })
+            .then(response => response.text())
+            .then(code => {
+              document.getElementById("output").innerText = code;
+            })
+            .catch(err => {
+              console.error("Error:", err);
+              alert("Error connecting to backend");
+            });
+  }
+
+  function copyCode() {
+    const code = document.getElementById("output").innerText;
+    if(code.trim() === "") { alert("No code to copy!"); return; }
+    navigator.clipboard.writeText(code)
+            .then(() => alert("Code copied to clipboard!"))
+            .catch(err => alert("Failed to copy code: " + err));
+  }
+
+  // ----------- QUESTION MODE -----------
+  function startSpeechQuestion() {
+    const recognition = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
+    recognition.lang = "en-US";
+
+    recognition.onresult = function(event) {
+      latestSpeechQuestion = event.results[0][0].transcript;
+      document.getElementById("speechTextQuestion").value = latestSpeechQuestion;
+    };
+
+    recognition.start();
+  }
+
+  function copyQuestion() {
+    const question = document.getElementById("speechTextQuestion").value;
+    if(question.trim() === "") { alert("No question to copy!"); return; }
+    navigator.clipboard.writeText(question)
+            .then(() => alert("Question copied to clipboard!"))
+            .catch(err => alert("Failed to copy question: " + err));
+  }
+</script>
+
+</body>
+</html>
